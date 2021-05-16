@@ -127,15 +127,20 @@ const nInput = document.getElementById("nInput");
 const solveBtn = document.getElementById("solveBtn");
 const speedRange = document.getElementById("speed");
 const progressBar = document.getElementById("progress");
+const immediateBtn = document.getElementById("immediate");
+const spinner = document.getElementById("spinner");
 let N = 4;
 const ways = [];
 const speedToMs = {
-  1: 4,
-  2: 3,
-  3: 2,
-  4: 1,
-  5: 0,
+  0: 400,
+  1: 300,
+  2: 200,
+  3: 100,
+  4: 50,
+  5: 1,
 };
+const NORMAL_SOLVE = "NORMAL_SOLVE";
+const INSTANT_SOLVE = "INSTANT_SOLVE";
 
 // whenever user changes N, make the board and store it
 nInput.addEventListener("change", (event) => {
@@ -150,7 +155,14 @@ nInput.addEventListener("change", (event) => {
 
 // solve the board when user clicks on solve button
 solveBtn.addEventListener("click", () => {
-  solveBoard();
+  resetGame();
+  solveBoard(NORMAL_SOLVE);
+});
+
+// solve board when user clicks on fast forward button
+immediateBtn.addEventListener("click", () => {
+  resetGame();
+  solveBoard(INSTANT_SOLVE);
 });
 
 /**
@@ -178,30 +190,39 @@ function makeBoard(n) {
 
 /**
  * solve the board with DOM manipulation
+ * @param solveMethod -> method of solving
  */
-async function solveBoard() {
-  solveBtn.disabled = true;
-  speedRange.disabled = true;
-  progressBar.style.width = "0px";
-
-  // getting the delay time user entered
-  const delayTiming = speedToMs[parseInt(speedRange.value)];
-  console.log("delay", delayTiming);
+async function solveBoard(solveMethod) {
+  switchInputsDisabled(true);
+  spinner.classList.toggle("active");
 
   // emptying the array
   ways.splice(0, ways.length);
+  // resetting progress bar
+  progressBar.style.width = "0px";
 
-  const board = new Array(N).fill(0).map((row) => new Array(N).fill(0));
+  // solving the game programatically
+  const board = new Array(N).fill(0).map(() => new Array(N).fill(0));
   const solvedBoard = await placeQueens(board);
-  printBoard(solvedBoard);
-  // set only the ans with some interval
-  // solvedBoard.forEach((row, i) => {
-  //   row.forEach(async (col, j) => {
-  //     if (col === 1) await setQueen(i, j, true);
-  //   });
-  // });
+
+  await sleep(1000);
+  spinner.classList.toggle("active");
+
+  // normal solving method with time delay
+  if (solveMethod === NORMAL_SOLVE) {
+    // getting the delay time user entered
+    const delayTiming = speedToMs[parseInt(speedRange.value)];
+    await setAllValuesWithMethod(delayTiming);
+  } else {
+    // instant display of solved board
+    await setAllValuesInstantly(solvedBoard);
+  }
+
+  switchInputsDisabled(false);
+}
+
+async function setAllValuesWithMethod(delayTiming) {
   for (let way in ways) {
-    console.log(ways[way]);
     progressBar.style.width = `${parseFloat((way / (ways.length - 1)) * 100)}%`;
     const { i, j, queen } = ways[way];
 
@@ -209,8 +230,30 @@ async function solveBoard() {
     setQueen(i, j, queen);
     await sleep(delayTiming);
   }
-  solveBtn.disabled = false;
-  speedRange.disabled = false;
+}
+
+/**
+ * set the game board all at once
+ * @param gameBoard -> board to set the values
+ */
+async function setAllValuesInstantly(gameBoard) {
+  gameBoard.forEach((row, i) => {
+    row.forEach(async (col, j) => {
+      if (col === 1) await setQueen(i, j, true);
+    });
+  });
+}
+
+/**
+ * reset the game board on DOM
+ */
+function resetGame() {
+  new Array(N).fill(0).forEach((row, i) => {
+    new Array(N).fill(0).forEach((col, j) => {
+      const squareDiv = document.getElementById(`${i}_${j}`);
+      squareDiv.innerText = "";
+    });
+  });
 }
 
 /**
@@ -221,9 +264,27 @@ function setQueen(i, j, queen) {
   squareDiv.innerText = queen ? "♛" : "";
 }
 
-// delay the execution for ms milliseconds
+/**
+ * delay the execution for ms milliseconds
+ * @param ms -> milliseconds to delay
+ */
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      clearTimeout(timeout);
+      resolve();
+    }, ms);
+  });
+}
+
+/**
+ * switch all the input disabled values
+ * @param disabled -> boolean value for disabled value
+ */
+function switchInputsDisabled(disabled) {
+  solveBtn.disabled = disabled;
+  speedRange.disabled = disabled;
+  nInput.disabled = disabled;
 }
 
 // make the board initially

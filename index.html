@@ -29,9 +29,29 @@
       .square__row:nth-child(even) .square:nth-child(odd) {
         background-color: #b59963;
       }
+      .spinner__container {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 5;
+      }
+      .spinner__container.active {
+        display: flex;
+      }
     </style>
   </head>
   <body>
+    <div class="spinner__container" id="spinner">
+      <div class="spinner-border text-primary" style="z-index: 6" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
     <div class="progress" style="height: 3px">
       <div class="progress-bar" role="progressbar" id="progress"></div>
     </div>
@@ -54,17 +74,22 @@
             Solve
           </button>
         </div>
-        <div class="col-xs-12 col-sm-6 px-5">
-          <label for="speed" class="form-label">Speed</label>
-          <input
-            type="range"
-            class="form-range"
-            value="5"
-            min="0"
-            max="5"
-            step="1"
-            id="speed"
-          />
+        <div class="col-xs-12 col-sm-6 mt-3 px-md-5 row align-items-end">
+          <div class="col-10">
+            <label for="speed" class="form-label">Speed</label>
+            <input
+              type="range"
+              class="form-range"
+              value="5"
+              min="0"
+              max="5"
+              step="1"
+              id="speed"
+            />
+          </div>
+          <div class="col-2">
+            <button class="btn btn-secondary" id="immediate">>>></button>
+          </div>
         </div>
       </div>
 
