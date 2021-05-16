@@ -95,12 +95,14 @@ function placeQueens(gameBoard) {
         if (checkIfQueenCanBePlaced(gameBoard, [i, j])) {
           // place the queen as it is valid
           gameBoard[i][j] = 1;
+          ways.push({ i, j, queen: true });
 
           // calling the function
           // if it returns false then the current position is not a good position
           if (!placeQueens(gameBoard)) {
             // then remove the queen that placed currently
             gameBoard[i][j] = 0;
+            ways.push({ i, j, queen: false });
           } else {
             // if the recursive call returns true then the game is over
             // as it only return true if the no of queens is satisifed with their positions
@@ -120,20 +122,34 @@ function placeQueens(gameBoard) {
  *********************************************/
 
 // variables for the DOM manipulation
-const gameBoardDiv = document.querySelector(".game__board");
+const gameBoardDiv = document.getElementById("gameBoard");
 const nInput = document.getElementById("nInput");
-const solveBtn = document.querySelector(".solve__btn");
+const solveBtn = document.getElementById("solveBtn");
+const speedRange = document.getElementById("speed");
+const progressBar = document.getElementById("progress");
 let N = 4;
+const ways = [];
+const speedToMs = {
+  1: 4,
+  2: 3,
+  3: 2,
+  4: 1,
+  5: 0,
+};
 
 // whenever user changes N, make the board and store it
 nInput.addEventListener("change", (event) => {
-  const n = parseInt(event.target.value);
-  makeBoard(n);
-  N = n;
+  N = parseInt(event.target.value);
+  // N should be between 4 and 10 to maintain recursive calls limited
+  N = Math.min(9, N);
+  N = Math.max(4, N);
+
+  makeBoard(N);
+  event.target.value = N;
 });
 
 // solve the board when user clicks on solve button
-solveBtn.addEventListener("click", (event) => {
+solveBtn.addEventListener("click", () => {
   solveBoard();
 });
 
@@ -149,11 +165,11 @@ function makeBoard(n) {
     for (let j = 0; j < n; j++) {
       const colDiv = document.createElement("div");
       colDiv.id = `${i}_${j}`;
-      colDiv.classList.add("board__col");
+      colDiv.className = "border square";
       rowDiv.appendChild(colDiv);
     }
 
-    rowDiv.classList.add("board__row");
+    rowDiv.className = "row square__row";
     boardDiv.appendChild(rowDiv);
   }
 
@@ -164,24 +180,50 @@ function makeBoard(n) {
  * solve the board with DOM manipulation
  */
 async function solveBoard() {
+  solveBtn.disabled = true;
+  speedRange.disabled = true;
+  progressBar.style.width = "0px";
+
+  // getting the delay time user entered
+  const delayTiming = speedToMs[parseInt(speedRange.value)];
+  console.log("delay", delayTiming);
+
+  // emptying the array
+  ways.splice(0, ways.length);
+
   const board = new Array(N).fill(0).map((row) => new Array(N).fill(0));
   const solvedBoard = await placeQueens(board);
   printBoard(solvedBoard);
-  solvedBoard.forEach((row, i) => {
-    row.forEach(async (col, j) => {
-      if (col === 1) await setQueen(i, j, true);
-    });
-  });
+  // set only the ans with some interval
+  // solvedBoard.forEach((row, i) => {
+  //   row.forEach(async (col, j) => {
+  //     if (col === 1) await setQueen(i, j, true);
+  //   });
+  // });
+  for (let way in ways) {
+    console.log(ways[way]);
+    progressBar.style.width = `${parseFloat((way / (ways.length - 1)) * 100)}%`;
+    const { i, j, queen } = ways[way];
+
+    // setting the steps performed in DOM with the given delay
+    setQueen(i, j, queen);
+    await sleep(delayTiming);
+  }
+  solveBtn.disabled = false;
+  speedRange.disabled = false;
 }
 
 /**
  * set the Queen in DOM
  */
-function setQueen(i, j) {
-  return setTimeout(() => {
-    const squareDiv = document.getElementById(`${i}_${j}`);
-    squareDiv.innerText = "Q";
-  }, 100 * (i + j));
+function setQueen(i, j, queen) {
+  const squareDiv = document.getElementById(`${i}_${j}`);
+  squareDiv.innerText = queen ? "♛" : "";
+}
+
+// delay the execution for ms milliseconds
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // make the board initially
