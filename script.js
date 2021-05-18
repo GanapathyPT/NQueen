@@ -154,15 +154,15 @@ nInput.addEventListener("change", (event) => {
 });
 
 // solve the board when user clicks on solve button
-solveBtn.addEventListener("click", () => {
+solveBtn.addEventListener("click", async () => {
   resetGame();
-  solveBoard(NORMAL_SOLVE);
+  await solveBoard(NORMAL_SOLVE);
 });
 
 // solve board when user clicks on fast forward button
-immediateBtn.addEventListener("click", () => {
+immediateBtn.addEventListener("click", async () => {
   resetGame();
-  solveBoard(INSTANT_SOLVE);
+  await solveBoard(INSTANT_SOLVE);
 });
 
 /**
