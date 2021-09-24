@@ -129,7 +129,7 @@ const speedRange = document.getElementById("speed");
 const progressBar = document.getElementById("progress");
 const immediateBtn = document.getElementById("immediate");
 const spinner = document.getElementById("spinner");
-let N = 4;
+let N; // denotes the no of queens to be placed
 const ways = [];
 const speedToMs = {
   0: 400,
@@ -139,30 +139,34 @@ const speedToMs = {
   4: 50,
   5: 1,
 };
-const NORMAL_SOLVE = "NORMAL_SOLVE";
-const INSTANT_SOLVE = "INSTANT_SOLVE";
+
+const handleNChange = (newN) => {
+  // N should be between 4 and 10 to maintain recursive calls limited
+  newN = Math.min(9, newN);
+  newN = Math.max(4, newN);
+
+  makeBoard(newN);
+  return newN;
+};
 
 // whenever user changes N, make the board and store it
 nInput.addEventListener("change", (event) => {
   N = parseInt(event.target.value);
-  // N should be between 4 and 10 to maintain recursive calls limited
-  N = Math.min(9, N);
-  N = Math.max(4, N);
-
-  makeBoard(N);
+  N = handleNChange(N);
   event.target.value = N;
+});
+
+nInput.addEventListener("keydown", async (event) => {
+  if (event.key === "Enter") {
+    resetGame();
+    await solveBoard();
+  }
 });
 
 // solve the board when user clicks on solve button
 solveBtn.addEventListener("click", async () => {
   resetGame();
-  await solveBoard(NORMAL_SOLVE);
-});
-
-// solve board when user clicks on fast forward button
-immediateBtn.addEventListener("click", async () => {
-  resetGame();
-  await solveBoard(INSTANT_SOLVE);
+  await solveBoard();
 });
 
 /**
@@ -192,7 +196,7 @@ function makeBoard(n) {
  * solve the board with DOM manipulation
  * @param solveMethod -> method of solving
  */
-async function solveBoard(solveMethod) {
+async function solveBoard() {
   switchInputsDisabled(true);
   spinner.classList.toggle("active");
 
@@ -208,19 +212,16 @@ async function solveBoard(solveMethod) {
   await sleep(1000);
   spinner.classList.toggle("active");
 
-  // normal solving method with time delay
-  if (solveMethod === NORMAL_SOLVE) {
-    // getting the delay time user entered
-    const delayTiming = speedToMs[parseInt(speedRange.value)];
-    await setAllValuesWithMethod(delayTiming);
-  } else {
-    // instant display of solved board
-    await setAllValuesInstantly(solvedBoard);
-  }
+  // getting the delay time user entered
+  const delayTiming = speedToMs[parseInt(speedRange.value)];
+  await setAllValuesWithMethod(delayTiming);
 
   switchInputsDisabled(false);
 }
 
+/**
+ * setting values of the grid with the given delay
+ */
 async function setAllValuesWithMethod(delayTiming) {
   for (let way in ways) {
     progressBar.style.width = `${parseFloat((way / (ways.length - 1)) * 100)}%`;
@@ -230,18 +231,6 @@ async function setAllValuesWithMethod(delayTiming) {
     setQueen(i, j, queen);
     await sleep(delayTiming);
   }
-}
-
-/**
- * set the game board all at once
- * @param gameBoard -> board to set the values
- */
-async function setAllValuesInstantly(gameBoard) {
-  gameBoard.forEach((row, i) => {
-    row.forEach(async (col, j) => {
-      if (col === 1) await setQueen(i, j, true);
-    });
-  });
 }
 
 /**
@@ -287,5 +276,6 @@ function switchInputsDisabled(disabled) {
   nInput.disabled = disabled;
 }
 
+const initialN = nInput.value ? parseInt(+nInput.value) : 4;
 // make the board initially
-makeBoard(N);
+handleNChange(initialN);
