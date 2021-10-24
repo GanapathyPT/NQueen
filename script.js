@@ -250,7 +250,7 @@ function resetGame() {
  */
 function setQueen(i, j, queen) {
   const squareDiv = document.getElementById(`${i}_${j}`);
-  squareDiv.innerText = queen ? "♛" : "";
+  squareDiv.innerHTML = queen ? `<img src="./public/queen.png" />` : "";
 }
 
 /**
@@ -277,5 +277,6 @@ function switchInputsDisabled(disabled) {
 }
 
 const initialN = nInput.value ? parseInt(+nInput.value) : 4;
+nInput.value = initialN;
 // make the board initially
 handleNChange(initialN);
